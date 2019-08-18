@@ -408,11 +408,11 @@ static consvar_t cv_dummymares = {"dummymares", "Overall", CV_HIDEN|CV_CALL, dum
 static menuitem_t MainMenu[] =
 {
 	{IT_CALL   |IT_STRING, NULL, "Secrets",     M_SecretsMenu,      76},
-	{IT_CALL   |IT_STRING, NULL, "1  player",   M_SinglePlayerMenu, 84},
+	{IT_CALL   |IT_STRING, NULL, "Singleplayer",   M_SinglePlayerMenu, 84},
 	{IT_SUBMENU|IT_STRING, NULL, "multiplayer", &MP_MainDef,        92},
-	{IT_CALL   |IT_STRING, NULL, "options",     M_Options,         100},
+	{IT_CALL   |IT_STRING, NULL, "Settings",     M_Options,         100},
 	{IT_CALL   |IT_STRING, NULL, "Addons",      M_Addons,          108},
-	{IT_CALL   |IT_STRING, NULL, "quit  game",  M_QuitSRB2,        116},
+	{IT_CALL   |IT_STRING, NULL, "Quit",  M_QuitSRB2,        116},
 };
 
 typedef enum
@@ -638,7 +638,7 @@ static menuitem_t SR_EmblemHintMenu[] =
 // Single Player Main
 static menuitem_t SP_MainMenu[] =
 {
-	{IT_CALL | IT_STRING,                       NULL, "Start Game",    M_LoadGame,        92},
+	{IT_CALL | IT_STRING,                       NULL, "File Select",    M_LoadGame,        92},
 	{IT_SECRET,                                 NULL, "Record Attack", M_TimeAttack,     100},
 	{IT_SECRET,                                 NULL, "NiGHTS Mode",   M_NightsAttack,   108},
 	{IT_CALL | IT_STRING | IT_CALL_NOTMODIFIED, NULL, "Statistics",    M_Statistics,     116},
@@ -805,13 +805,13 @@ static menuitem_t MP_MainMenu[] =
 {
 #ifndef NONET
 	{IT_CALL | IT_STRING, NULL, "HOST GAME",              M_StartServerMenu,      10},
-	{IT_CALL | IT_STRING, NULL, "JOIN GAME (Search)",	  M_ConnectMenu,		  30},
-	{IT_CALL | IT_STRING, NULL, "JOIN GAME (Specify IP)", M_ConnectIPMenu,        40},
+	{IT_CALL | IT_STRING, NULL, "MASTER SERVER",	  M_ConnectMenu,		  30},
+	{IT_CALL | IT_STRING, NULL, "CONNECT TO IP", M_ConnectIPMenu,        40},
 #endif
 	{IT_CALL | IT_STRING, NULL, "TWO PLAYER GAME",        M_StartSplitServerMenu, 60},
 
-	{IT_CALL | IT_STRING, NULL, "SETUP PLAYER 1",         M_SetupMultiPlayer,     80},
-	{IT_CALL | IT_STRING, NULL, "SETUP PLAYER 2",         M_SetupMultiPlayer2,    90},
+	{IT_CALL | IT_STRING, NULL, "P1 SETUP",         M_SetupMultiPlayer,     80},
+	{IT_CALL | IT_STRING, NULL, "P2 SETUP",         M_SetupMultiPlayer2,    90},
 };
 
 static menuitem_t MP_ServerMenu[] =
@@ -930,29 +930,26 @@ static menuitem_t OP_MainMenu[] =
 
 static menuitem_t OP_ControlsMenu[] =
 {
-	{IT_SUBMENU | IT_STRING, NULL, "Player 1 Controls...", &OP_P1ControlsDef,  10},
-	{IT_SUBMENU | IT_STRING, NULL, "Player 2 Controls...", &OP_P2ControlsDef,  20},
+	{IT_SUBMENU | IT_STRING, NULL, "P1 Controls...", &OP_P1ControlsDef,  10},
+	{IT_SUBMENU | IT_STRING, NULL, "P2 Controls...", &OP_P2ControlsDef,  20},
 
 	{IT_STRING  | IT_CVAR, NULL, "Controls per key", &cv_controlperkey, 40},
 };
 
 static menuitem_t OP_P1ControlsMenu[] =
 {
-	{IT_CALL    | IT_STRING, NULL, "Control Configuration...", M_Setup1PControlsMenu,   10},
+	{IT_CALL    | IT_STRING, NULL, "Keyboard Options...", M_Setup1PControlsMenu,   10},
 	{IT_SUBMENU | IT_STRING, NULL, "Mouse Options...", &OP_MouseOptionsDef, 20},
-	{IT_SUBMENU | IT_STRING, NULL, "Joystick Options...", &OP_Joystick1Def  ,  30},
 
-	{IT_STRING  | IT_CVAR, NULL, "Camera"  , &cv_chasecam  ,  50},
-	{IT_STRING  | IT_CVAR, NULL, "Crosshair", &cv_crosshair , 60},
-
-	{IT_STRING  | IT_CVAR, NULL, "Analog Control", &cv_useranalog,  80},
+	{IT_STRING  | IT_CVAR, NULL, "Camera"  , &cv_chasecam  ,  40},
+	{IT_STRING  | IT_CVAR, NULL, "Crosshair", &cv_crosshair , 50},
 };
 
 static menuitem_t OP_P2ControlsMenu[] =
 {
-	{IT_CALL    | IT_STRING, NULL, "Control Configuration...", M_Setup2PControlsMenu,   10},
-	{IT_SUBMENU | IT_STRING, NULL, "Second Mouse Options...", &OP_Mouse2OptionsDef, 20},
-	{IT_SUBMENU | IT_STRING, NULL, "Second Joystick Options...", &OP_Joystick2Def  ,  30},
+	{IT_CALL    | IT_STRING, NULL, "Keyboard Options...", M_Setup2PControlsMenu,   10},
+	{IT_SUBMENU | IT_STRING, NULL, "Mouse Options...", &OP_Mouse2OptionsDef, 20},
+	{IT_SUBMENU | IT_STRING, NULL, "Controller Options...", &OP_Joystick2Def  ,  30},
 
 	{IT_STRING  | IT_CVAR, NULL, "Camera"  , &cv_chasecam2 , 50},
 	{IT_STRING  | IT_CVAR, NULL, "Crosshair", &cv_crosshair2, 60},
@@ -972,8 +969,8 @@ static menuitem_t OP_MoveControlsMenu[] =
 	{IT_HEADER, NULL, "  Movement", NULL, 0},
 	{IT_CALL | IT_STRING2, NULL, "Move Forward",     M_ChangeControl, gc_forward     },
 	{IT_CALL | IT_STRING2, NULL, "Move Backward",    M_ChangeControl, gc_backward    },
-	{IT_CALL | IT_STRING2, NULL, "Move Left",        M_ChangeControl, gc_strafeleft  },
-	{IT_CALL | IT_STRING2, NULL, "Move Right",       M_ChangeControl, gc_straferight },
+	{IT_CALL | IT_STRING2, NULL, "Strafe Left",        M_ChangeControl, gc_strafeleft  },
+	{IT_CALL | IT_STRING2, NULL, "Strafe Right",       M_ChangeControl, gc_straferight },
 	{IT_CALL | IT_STRING2, NULL, "Jump",             M_ChangeControl, gc_jump      },
 	{IT_CALL | IT_STRING2, NULL, "Spin",             M_ChangeControl, gc_use     },
 	{IT_HEADER, NULL, "  Camera", NULL, 0},
@@ -986,15 +983,15 @@ static menuitem_t OP_MoveControlsMenu[] =
 	{IT_CALL | IT_STRING2, NULL, "Toggle Third-Person", M_ChangeControl, gc_camtoggle},
 	{IT_CALL | IT_STRING2, NULL, "Reset Camera",     M_ChangeControl, gc_camreset    },
 	{IT_HEADER, NULL, "  Advanced", NULL, 0},
-	{IT_CALL | IT_STRING2, NULL, "Rotate Camera L",  M_ChangeControl, gc_camleft      },
-	{IT_CALL | IT_STRING2, NULL, "Rotate Camera R",  M_ChangeControl, gc_camright     },
+	{IT_CALL | IT_STRING2, NULL, "Rotate Camera L",  M_ChangeControl, gc_camright     },
+	{IT_CALL | IT_STRING2, NULL, "Rotate Camera R",  M_ChangeControl, gc_camleft      },
 };
 
 static menuitem_t OP_MPControlsMenu[] =
 {
-	{IT_CALL | IT_STRING2, NULL, "Talk key",         M_ChangeControl, gc_talkkey      },
-	{IT_CALL | IT_STRING2, NULL, "Team-Talk key",    M_ChangeControl, gc_teamkey      },
-	{IT_CALL | IT_STRING2, NULL, "Rankings/Scores",  M_ChangeControl, gc_scores       },
+	{IT_CALL | IT_STRING2, NULL, "Chat key",         M_ChangeControl, gc_talkkey      },
+	{IT_CALL | IT_STRING2, NULL, "Team Chat key",    M_ChangeControl, gc_teamkey      },
+	{IT_CALL | IT_STRING2, NULL, "Scoreboard",  M_ChangeControl, gc_scores       },
 	{IT_CALL | IT_STRING2, NULL, "Toss Flag",        M_ChangeControl, gc_tossflag     },
 	{IT_CALL | IT_STRING2, NULL, "Next Weapon",      M_ChangeControl, gc_weaponnext   },
 	{IT_CALL | IT_STRING2, NULL, "Prev Weapon",      M_ChangeControl, gc_weaponprev   },
@@ -1005,8 +1002,8 @@ static menuitem_t OP_MPControlsMenu[] =
 	{IT_CALL | IT_STRING2, NULL, "Weapon Slot 5",    M_ChangeControl, gc_wepslot5     },
 	{IT_CALL | IT_STRING2, NULL, "Weapon Slot 6",    M_ChangeControl, gc_wepslot6     },
 	{IT_CALL | IT_STRING2, NULL, "Weapon Slot 7",    M_ChangeControl, gc_wepslot7     },
-	{IT_CALL | IT_STRING2, NULL, "Ring Toss",        M_ChangeControl, gc_fire         },
-	{IT_CALL | IT_STRING2, NULL, "Ring Toss Normal", M_ChangeControl, gc_firenormal   },
+	{IT_CALL | IT_STRING2, NULL, "Fire Weapon",        M_ChangeControl, gc_fire         },
+	{IT_CALL | IT_STRING2, NULL, "Fire Normal", M_ChangeControl, gc_firenormal   },
 };
 
 static menuitem_t OP_MiscControlsMenu[] =
@@ -1017,8 +1014,8 @@ static menuitem_t OP_MiscControlsMenu[] =
 
 	{IT_CALL | IT_STRING2, NULL, "Pause",            M_ChangeControl, gc_pause        },
 	{IT_CALL | IT_STRING2, NULL, "Screenshot",            M_ChangeControl, gc_screenshot },
-	{IT_CALL | IT_STRING2, NULL, "Toggle GIF Recording",  M_ChangeControl, gc_recordgif  },
-	{IT_CALL | IT_STRING2, NULL, "Open/Close Menu (ESC)", M_ChangeControl, gc_systemmenu },
+	{IT_CALL | IT_STRING2, NULL, "Record GIF",  M_ChangeControl, gc_recordgif  },
+	{IT_CALL | IT_STRING2, NULL, "System Menu", M_ChangeControl, gc_systemmenu },
 	{IT_CALL | IT_STRING2, NULL, "Change Viewpoint",      M_ChangeControl, gc_viewpoint  },
 	{IT_CALL | IT_STRING2, NULL, "Console",          M_ChangeControl, gc_console      },
 };
@@ -1041,7 +1038,7 @@ static menuitem_t OP_Joystick1Menu[] =
 
 static menuitem_t OP_Joystick2Menu[] =
 {
-	{IT_STRING | IT_CALL,  NULL, "Select Joystick...", M_Setup2PJoystickMenu,  10},
+	{IT_STRING | IT_CALL,  NULL, "Select Controller...", M_Setup2PJoystickMenu,  10},
 	{IT_STRING | IT_CVAR,  NULL, "Axis For Turning"  , &cv_turnaxis2        ,  30},
 	{IT_STRING | IT_CVAR,  NULL, "Axis For Moving"   , &cv_moveaxis2        ,  40},
 	{IT_STRING | IT_CVAR,  NULL, "Axis For Strafe"   , &cv_sideaxis2        ,  50},
@@ -1084,8 +1081,8 @@ static menuitem_t OP_MouseOptionsMenu[] =
 static menuitem_t OP_Mouse2OptionsMenu[] =
 {
 	{IT_STRING | IT_CVAR, NULL, "Use Mouse 2",      &cv_usemouse2,        10},
-	{IT_STRING | IT_CVAR, NULL, "Second Mouse Serial Port",
-	                                                &cv_mouse2port,       20},
+
+
 	{IT_STRING | IT_CVAR, NULL, "First-Person MouseLook", &cv_alwaysfreelook2,  30},
 	{IT_STRING | IT_CVAR, NULL, "Third-Person MouseLook", &cv_chasefreelook2,  40},
 	{IT_STRING | IT_CVAR, NULL, "Mouse Move",       &cv_mousemove2,       50},
@@ -1101,7 +1098,7 @@ static menuitem_t OP_VideoOptionsMenu[] =
 	{IT_STRING | IT_CALL,  NULL,   "Video Modes...",      M_VideoModeMenu,     10},
 
 #ifdef HWRENDER
-	{IT_SUBMENU|IT_STRING, NULL,   "3D Card Options...",  &OP_OpenGLOptionsDef,    20},
+	{IT_SUBMENU|IT_STRING, NULL,   "OpenGL Options...",  &OP_OpenGLOptionsDef,    20},
 #endif
 
 #if (defined (__unix__) && !defined (MSDOS)) || defined (UNIXCOMMON) || defined (HAVE_SDL)
@@ -1116,7 +1113,7 @@ static menuitem_t OP_VideoOptionsMenu[] =
 	{IT_STRING | IT_CVAR,    NULL, "Precip Density",      &cv_precipdensity, 90},
 
 	{IT_STRING | IT_CVAR,    NULL, "Show FPS",            &cv_ticrate,    110},
-	{IT_STRING | IT_CVAR,    NULL, "Clear Before Redraw", &cv_homremoval, 120},
+	{IT_STRING | IT_CVAR,    NULL, "HOM Removal", &cv_homremoval, 120},
 	{IT_STRING | IT_CVAR,    NULL, "Vertical Sync",       &cv_vidwait,    130},
 };
 
@@ -1176,10 +1173,7 @@ static menuitem_t OP_SoundOptionsMenu[] =
                               NULL, "Music Volume" , &cv_digmusicvolume,  20},
 	{IT_STRING | IT_CVAR | IT_CV_SLIDER,
                               NULL, "MIDI Volume"  , &cv_midimusicvolume, 30},
-#ifdef PC_DOS
-	{IT_STRING | IT_CVAR | IT_CV_SLIDER,
-                              NULL, "CD Volume"    , &cd_volume,          40},
-#endif
+
 
 	{IT_STRING | IT_CVAR,  NULL,  "SFX"   , &cv_gamesounds,        50},
 	{IT_STRING | IT_CVAR,  NULL,  "Digital Music", &cv_gamedigimusic,     60},
@@ -1369,8 +1363,8 @@ static menuitem_t OP_MonitorToggleMenu[] =
 	{IT_STRING|IT_CVAR|IT_CV_INVISSLIDER, NULL, "Attraction Shield", &cv_ringshield,    90},
 	{IT_STRING|IT_CVAR|IT_CV_INVISSLIDER, NULL, "Force Shield",      &cv_forceshield,  100},
 	{IT_STRING|IT_CVAR|IT_CV_INVISSLIDER, NULL, "Armageddon Shield", &cv_bombshield,   110},
-	{IT_STRING|IT_CVAR|IT_CV_INVISSLIDER, NULL, "1 Up",              &cv_1up,          120},
-	{IT_STRING|IT_CVAR|IT_CV_INVISSLIDER, NULL, "Eggman Box",        &cv_eggmanbox,    130},
+	{IT_STRING|IT_CVAR|IT_CV_INVISSLIDER, NULL, "1-Up",              &cv_1up,          120},
+	{IT_STRING|IT_CVAR|IT_CV_INVISSLIDER, NULL, "Eggman Monitor",        &cv_eggmanbox,    130},
 };
 
 // ==========================================================================

@@ -162,6 +162,7 @@ static void Command_Togglemodified_f(void);
 static void Command_Archivetest_f(void);
 #endif
 #endif
+static void Command_Whitelist_f(void);
 
 // =========================================================================
 //                           CLIENT VARIABLES
@@ -484,6 +485,7 @@ void D_RegisterServerCommands(void)
 	COM_AddCommand("showscores", Command_ShowScores_f);
 	COM_AddCommand("showtime", Command_ShowTime_f);
 	COM_AddCommand("cheats", Command_Cheats_f); // test
+	COM_AddCommand("whitelist", Command_Whitelist_f);
 #ifdef _DEBUG
 	COM_AddCommand("togglemodified", Command_Togglemodified_f);
 #ifdef HAVE_BLUA
@@ -4137,6 +4139,33 @@ static void Command_Cheats_f(void)
 	}
 	else
 		CONS_Printf(M_GetText("No CHEAT-marked variables are changed -- Cheats are disabled.\n"));
+}
+/** Whitelist a wad of a certain name so it won't mark the game as modified. */
+char whitelist[128][256];    // Max filename length 128, max # of wads 256
+int whitelist_num = 0;
+static void Command_Whitelist_f(void)
+{
+    const char *fn;
+    if (COM_Argc() != 2)
+    {
+        CONS_Printf("whitelist <filename>: Whitelist a file.\n");
+        for (int i=0; i<whitelist_num; i++) {
+            if (i==0)
+                CONS_Printf("Currently whitelisted files:\n");
+            CONS_Printf("* %d) %s\n", i+1, whitelist[i]);
+        }
+        return;
+    }
+    else
+        fn = COM_Argv(1);
+
+    // Disallow non-printing characters and semicolons.
+    for (int i = 0; fn[i] != '\0'; i++)
+        if (!isprint(fn[i]) || fn[i] == ';')
+            return;
+
+    strcpy(whitelist[whitelist_num], fn);
+    whitelist_num++;
 }
 
 #ifdef _DEBUG

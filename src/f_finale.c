@@ -270,15 +270,6 @@ static tic_t introscenetime[NUMINTROSCENES] =
 	18*TICRATE,					// About once every year, a strange...
 	19*TICRATE + (TICRATE/2),	// Curses! Eggman yelled. That ridiculous...
 	19*TICRATE + (TICRATE/4),	// It was only later that he had an idea...
-	10*TICRATE + (TICRATE/2),	// Before beginning his scheme, Eggman decided to give Sonic...
-	16*TICRATE,					// We're ready to fire in 15 seconds, the robot said...
-	16*TICRATE,					// Meanwhile, Sonic was tearing across the zones...
-	16*TICRATE + (TICRATE/2),	// Sonic knew he was getting closer to the city...
-	17*TICRATE,					// Greenflower City was gone...
-	16*TICRATE + (TICRATE/2),	// You're not quite as dead as we thought, huh?...
-	18*TICRATE + (TICRATE/2),	// Eggman took this as his cue and blasted off...
-	16*TICRATE,					// Easy! We go find Eggman and stop his...
-	25*TICRATE,					// I'm just finding what mission obje...
 };
 
 // custom intros
@@ -298,136 +289,47 @@ void F_StartIntro(void)
 	introtext[0] = " #";
 
 	introtext[1] = M_GetText(
-	"Two months had passed since Dr. Eggman\n"
-	"tried to take over the world using his\n"
-	"Ring Satellite.\n#");
+	"I\'ve come to make an announcement:\n"
+	"Shadow the Hedgehog\'s a bitch ass\n"
+	"motherfucker. He pissed on my fucking\n"
+	"wife.\n#");
 
 	introtext[2] = M_GetText(
-	"As it was about to drain the rings\n"
-	"away from the planet, Sonic burst into\n"
-	"the Satellite and for what he thought\n"
-	"would be the last time,\xB4 defeated\n"
-	"Dr. Eggman.\n#");
+	"Thats right, he took out his hedgehog-\n"
+	"fuckin\' quilly dick out and he pissed\n"
+	"on my fucking wife, and he said his\n"
+	"dick was\xB4 thiiis biiiig and I said\n"
+	"that\'s disgusting!\n#");
 
 	introtext[3] = M_GetText(
-	"\nWhat Sonic, Tails, and Knuckles had\n"
-	"not anticipated was that Eggman would\n"
-	"return,\xB8 bringing an all new threat.\n#");
+	"So I\'m making a callout post on my Twitter\n"
+	"Dot Com: Shadow the Hedgehog, you got a\n"
+	"small dick.\xB8 It\'s like the size of this\n"
+	"walnut except way smaller. And guess what,\n"
+	"here\'s what mine looks like:\n#");
 
 	introtext[4] = M_GetText(
-	"\xA8""About once every year, a strange asteroid\n"
-	"hovers around the planet.\xBF It suddenly\n"
-	"appears from nowhere, circles around, and\n"
-	"\xB6- just as mysteriously as it arrives -\xB6\n"
-	"vanishes after about two months.\xBF\n"
-	"No one knows why it appears, or how.\n#");
+	"\xA8""That\'s right baby. All point, no quills, no\n"
+	"pillows.\xBF Look at that, it looks like two balls\n"
+	"and a bong.\n#");
 
 	introtext[5] = M_GetText(
-	"\xA7\"Curses!\"\xA9\xBA Eggman yelled. \xA7\"That hedgehog\n"
-	"and his ridiculous friends will pay\n"
-	"dearly for this!\"\xA9\xC8 Just then his scanner\n"
-	"blipped as the Black Rock made its\n"
-	"appearance from nowhere.\xBF Eggman looked at\n"
-	"the screen, and just shrugged it off.\n#");
+	"\xA7You fucked my wife so guess what,\xA9\xBA I\'m gonna fuck\n"
+	"the earth. That\'s right, this is what you get:\n"
+	"my super laser piss!\xA9\xC8 Except I\'m not gonna piss\n"
+	"on the earth, I'm gonna go higher:\n"
+	"I\'m pissing on the mooon!\xBF How do you like\n"
+	"that, Obama?! I pissed on the moon, you *IDIOT*!\n#");
 
 	introtext[6] = M_GetText(
-	"It was only later\n"
-	"that he had an\n"
-	"idea. \xBF\xA7\"The Black\n"
-	"Rock usually has a\n"
-	"lot of energy\n"
-	"within it\xAC...\xA7\xBF\n"
-	"If I can somehow\n"
-	"harness this,\xB8 I\n"
-	"can turn it into\n"
-	"the ultimate\n"
-	"battle station\xAC...\xA7\xBF\n"
-	"And every last\n"
-	"person will be\n"
-	"begging for mercy,\xB8\xA8\n"
-	"including Sonic!\"\n#");
-
-	introtext[7] = M_GetText(
-	"\xA8\nBefore beginning his scheme,\n"
-	"Eggman decided to give Sonic\n"
-	"a reunion party...\n#");
-
-	introtext[8] = M_GetText(
-	"\xA5\"We're\xB6 ready\xB6 to\xB4 fire\xB6 in\xB6 15\xB6 seconds!\"\xA8\xB8\n"
-	"The robot said, his voice crackling a\n"
-	"little down the com-link. \xBF\xA7\"Good!\"\xA8\xB8\n"
-	"Eggman sat back in his Egg-Mobile and\n"
-	"began to count down as he saw the\n"
-	"GreenFlower city on the main monitor.\n#");
-
-	introtext[9] = M_GetText(
-	"\xA5\"10...\xD2""9...\xD2""8...\"\xA8\xD2\n"
-	"Meanwhile, Sonic was tearing across the\n"
-	"zones. Everything became a blur as he\n"
-	"ran around loops, skimmed over water,\n"
-	"and catapulted himself off rocks with\n"
-	"his phenomenal speed.\n#");
-
-	introtext[10] = M_GetText(
-	"\xA5\"6...\xD2""5...\xD2""4...\"\xA8\xD2\n"
-	"Sonic knew he was getting closer to the\n"
-	"City, and pushed himself harder.\xB4 Finally,\n"
-	"the city appeared in the horizon.\xD2\xD2\n"
-	"\xA5\"3...\xD2""2...\xD2""1...\xD2""Zero.\"\n#");
-
-	introtext[11] = M_GetText(
-	"GreenFlower City was gone.\xC4\n"
-	"Sonic arrived just in time to see what\n"
-	"little of the 'ruins' were left.\n"
-	"Everyone and everything in the city\n"
-	"had been obliterated.\n#");
-
-	introtext[12] = M_GetText(
-	"\xA7\"You're not quite as dead as we thought,\n"
-	"huh?\xBF Are you going to tell us your plan as\n"
-	"usual or will I \xA8\xB4'have to work it out'\xA7 or\n"
-	"something?\"\xD2\xD2\n"
-	"\"We'll see\xAA...\xA7\xBF let's give you a quick warm\n"
-	"up, Sonic!\xA6\xC4 JETTYSYNS!\xA7\xBD Open fire!\"\n#");
-
-	introtext[13] = M_GetText(
-	"Eggman took this\n"
-	"as his cue and\n"
-	"blasted off,\n"
-	"leaving Sonic\n"
-	"and Tails behind.\xB6\n"
-	"Tails looked at\n"
-	"the ruins of the\n"
-	"Greenflower City\n"
-	"with a grim face\n"
-	"and sighed.\xC6\n"
-	"\xA7\"Now\xB6 what do we\n"
-	"do?\",\xA9 he asked.\n#");
-
-	introtext[14] = M_GetText(
-	"\xA7\"Easy!\xBF We go\n"
-	"find Eggman\n"
-	"and stop his\n"
-	"latest\n"
-	"insane plan.\xBF\n"
-	"Just like\n"
-	"we've always\n"
-	"done,\xBA right?\xD2\n\n"
-	"\xAE...\xA9\xD2\n\n"
-	"\"Tails, what\n"
-	"\xAA*ARE*\xA9 you\n"
-	"doing?\"\n#");
-
-	introtext[15] = M_GetText(
-	"\xA8\"I'm just finding what mission obje\xAC\xB1...\xBF\n"
-	"\xA6""a-\xB8""ha!\xBF Here it is!\xA8\xBF This will only give us\n"
-	"the robot's primary objective.\xBF It says\xAC\xB1...\"\n"
-	"\xD2\xA3\x83"
-	"* LOCATE  AND  RETRIEVE:  CHAOS  EMERALDS *"
-	"\xBF\n"
-	"*  CLOSEST  LOCATION:  GREENFLOWER  ZONE  *"
-	"\x80\n\xA9\xD2\xD2"
-	"\"All right, then\xAF... \xD2\xD2\xA7let's go!\"\n#");
+	"You have twenty-\n"
+	"three hours before\n"
+	"the piss drrroplets\n"
+	"hit the fucking\n"
+	"Earth.\n"
+	"Now get out of my\n"
+	"fucking sight, before\n"
+	"I piss on you, too!\n#");
 
 /*
 	"What are we waiting for? The first emerald is ours!" Sonic was about to

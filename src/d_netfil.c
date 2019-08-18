@@ -107,15 +107,20 @@ INT32 lastfilenum = -1;
   * Used to have size limiting built in - now handed via W_LoadWadFile in w_wad.c
   *
   */
+extern char whitelist[128][256];    // Max filename length 128, max # of wads 256
+extern int whitelist_num;
 UINT8 *PutFileNeeded(void)
 {
-	size_t i, count = 0;
-	UINT8 *p = netbuffer->u.serverinfo.fileneeded;
-	char wadfilename[MAX_WADPATH] = "";
-	UINT8 filestatus;
-
-	for (i = 0; i < numwadfiles; i++)
-	{
+    size_t i, count = 0;
+    UINT8 *p = netbuffer->u.serverinfo.fileneeded;
+    char wadfilename[MAX_WADPATH] = "";
+    UINT8 filestatus;
+    size_t bytesused = 0;
+    
+    for (i = 0; i < numwadfiles; i++)
+    {
+        if (W_VerifyNMUSlumps(wadfiles[i]->filename))
+            continue;
 		// If it has only music/sound lumps, don't put it in the list
 		if (!wadfiles[i]->important)
 			continue;
