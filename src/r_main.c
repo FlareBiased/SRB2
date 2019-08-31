@@ -683,7 +683,8 @@ void R_ExecuteSetViewSize(void)
 
 	am_recalc = true;
 #ifdef SOFTPOLY
-	RSP_Viewport(viewwidth, viewheight);
+	if (cv_models.value)
+		RSP_Viewport(viewwidth, viewheight, splitscreen);
 #endif
 }
 
@@ -694,28 +695,27 @@ void R_ExecuteSetViewSize(void)
 void R_Init(void)
 {
 	// screensize independent
-	CONS_Printf("R_InitData()...\n");
+	//I_OutputMsg("\nR_InitData");
 	R_InitData();
 
-	CONS_Printf("R_InitViewBorder()...\n");
+	//I_OutputMsg("\nR_InitViewBorder");
 	R_InitViewBorder();
-	R_SetViewSize();
+	R_SetViewSize(); // setsizeneeded is set true
 
-	CONS_Printf("R_InitPlanes()...\n");
+	//I_OutputMsg("\nR_InitPlanes");
 	R_InitPlanes();
 
-	CONS_Printf("R_InitLightTables()...\n");
+	// this is now done by SCR_Recalc() at the first mode set
+	//I_OutputMsg("\nR_InitLightTables");
 	R_InitLightTables();
 
-	CONS_Printf("R_InitTranslationTables()...\n");
+	//I_OutputMsg("\nR_InitTranslationTables\n");
 	R_InitTranslationTables();
 
-	CONS_Printf("R_InitDrawNodes()...\n");
 	R_InitDrawNodes();
 
 #ifdef SOFTPOLY
-	CONS_Printf("RSP_InitModels()...\n");
-	RSP_InitModels();
+	RSP_Init();
 #endif
 
 	framecount = 0;
@@ -1273,6 +1273,10 @@ void R_RenderPlayerView(player_t *player)
 	portalrender = 0;
 	portal_base = portal_cap = NULL;
 
+#ifdef SOFTPOLY
+	RSP_OnFrame();
+#endif // SOFTPOLY
+
 	if (skybox && skyVisible)
 	{
 		R_SkyboxFrame(player);
@@ -1336,8 +1340,11 @@ void R_RenderPlayerView(player_t *player)
 		portalrender = portal->pass;
 
 #ifdef SOFTPOLY
-		RSP_StoreViewpoint();
-		portalrendered = true;
+		if (cv_models.value)
+		{
+			RSP_StoreViewpoint();
+			portalrendered = true;
+		}
 #endif // SOFTPOLY
 
 		R_PortalFrame(&lines[portal->line1], &lines[portal->line2], portal);
