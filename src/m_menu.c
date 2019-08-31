@@ -906,9 +906,9 @@ static menuitem_t MP_SplitServerMenu[] =
 
 static menuitem_t MP_PlayerSetupMenu[] =
 {
-	{IT_KEYHANDLER | IT_STRING,   NULL, "Your name",   M_HandleSetupMultiPlayer,   0},
-	{IT_KEYHANDLER | IT_STRING,   NULL, "Your color",  M_HandleSetupMultiPlayer,  16},
-	{IT_KEYHANDLER | IT_STRING,   NULL, "Your player", M_HandleSetupMultiPlayer,  96}, // Tails 01-18-2001
+	{IT_KEYHANDLER | IT_STRING,   NULL, "Name",   M_HandleSetupMultiPlayer,   0},
+	{IT_KEYHANDLER | IT_STRING,   NULL, "Character", M_HandleSetupMultiPlayer,  16}, // Tails 01-18-2001
+	{IT_KEYHANDLER | IT_STRING,   NULL, "Color",  M_HandleSetupMultiPlayer,  96},
 };
 
 // ------------------------------------
@@ -6901,7 +6901,7 @@ static void M_DrawConnectIPMenu(void)
 	M_DrawGenericMenu();
 
 	// draw name string
-	V_DrawString(128,40, V_MONOSPACE, setupm_ip);
+	V_DrawString(128,16, V_MONOSPACE, setupm_ip);
 
 	// draw text cursor for name
 	if (itemOn == 0 &&
@@ -7014,6 +7014,11 @@ static void M_DrawSetupMultiPlayerMenu(void)
 	spriteframe_t *sprframe;
 	patch_t *patch;
 	UINT8 frame;
+	UINT8 i;
+	UINT8 x;
+	UINT8 cullskincolors;
+	UINT8 skincolorstoshow;
+
 
 	mx = MP_PlayerSetupDef.x;
 	my = MP_PlayerSetupDef.y;
@@ -7026,17 +7031,43 @@ static void M_DrawSetupMultiPlayerMenu(void)
 	V_DrawString(mx + 98, my, V_ALLOWLOWERCASE, setupm_name);
 
 	// draw skin string
-	V_DrawString(mx + 90, my + 96,
+	V_DrawString(mx + 0, my + 26,
 	             ((MP_PlayerSetupMenu[2].status & IT_TYPE) == IT_SPACE ? V_TRANSLUCENT : 0)|V_YELLOWMAP|V_ALLOWLOWERCASE,
 	             skins[setupm_fakeskin].realname);
 
 	// draw the name of the color you have chosen
 	// Just so people don't go thinking that "Default" is Green.
-	V_DrawString(208, 72, V_YELLOWMAP|V_ALLOWLOWERCASE, Color_Names[setupm_fakecolor]);
+	V_DrawString(mx + 90, my + 96, V_YELLOWMAP|V_ALLOWLOWERCASE, Color_Names[setupm_fakecolor]);
 
 	// draw text cursor for name
 	if (!itemOn && skullAnimCounter < 4) // blink cursor
 		V_DrawCharacter(mx + 98 + V_StringWidth(setupm_name, 0), my, '_',false);
+
+		// Lach - 29 August 2019
+    skincolorstoshow = 22;
+    cullskincolors = 4;
+    x = mx - 1 + 8 * cullskincolors;
+    for (i = cullskincolors + 1; i < skincolorstoshow; i++)
+    {
+        UINT8 width = 8;
+        UINT8 skincolorid;
+        UINT8 *skincolormap;
+        UINT8 j;
+
+        skincolorid = setupm_fakecolor + i + skincolorstoshow / 2;
+        skincolorid %= MAXSKINCOLORS - 1;
+        skincolorid += 1;
+        skincolormap = R_GetTranslationColormap(0, skincolorid, 0);
+
+        if (skincolorid == setupm_fakecolor)
+            width = 70;
+
+        for (j = 0; j < 16; j++)
+        {
+            V_DrawFill(x, my + 112 + j, width, 1, skincolormap[160 + j]);
+        }
+        x += width;
+    }
 
 	// anim the player in the box
 	if (--multi_tics <= 0)
@@ -7120,12 +7151,12 @@ static void M_HandleSetupMultiPlayer(INT32 choice)
 			break;
 
 		case KEY_LEFTARROW:
-			if (itemOn == 2)       //player skin
+			if (itemOn == 1)       //player skin
 			{
 				S_StartSound(NULL,sfx_menu1); // Tails
 				setupm_fakeskin--;
 			}
-			else if (itemOn == 1) // player color
+			else if (itemOn == 2) // player color
 			{
 				S_StartSound(NULL,sfx_menu1); // Tails
 				setupm_fakecolor--;
@@ -7133,12 +7164,12 @@ static void M_HandleSetupMultiPlayer(INT32 choice)
 			break;
 
 		case KEY_RIGHTARROW:
-			if (itemOn == 2)       //player skin
+			if (itemOn == 1)       //player skin
 			{
 				S_StartSound(NULL,sfx_menu1); // Tails
 				setupm_fakeskin++;
 			}
-			else if (itemOn == 1) // player color
+			else if (itemOn == 2) // player color
 			{
 				S_StartSound(NULL,sfx_menu1); // Tails
 				setupm_fakecolor++;
