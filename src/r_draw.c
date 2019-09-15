@@ -106,7 +106,7 @@ UINT8 *ds_transmap; // one of the translucency tables
 #ifdef ESLOPE
 pslope_t *ds_slope; // Current slope being used
 floatv3_t ds_su, ds_sv, ds_sz; // Vectors for... stuff?
-float zeroheight;
+float focallengthf, zeroheight;
 #endif
 
 /**	\brief Variable flat sizes
@@ -143,12 +143,12 @@ const char *Color_Names[MAXSKINCOLORS] =
 	"Grey",      // SKINCOLOR_GREY
 	"Black",     // SKINCOLOR_BLACK
 	"Cyan",      // SKINCOLOR_CYAN
-	"Teal",      // SKINCOLOR_TEAL
-	"Steel_Blue",// SKINCOLOR_STEELBLUE
-	"Blue",      // SKINCOLOR_BLUE
+	"Aqua",      // SKINCOLOR_TEAL
+	"Slate",		 // SKINCOLOR_STEELBLUE
+	"Sapphire",  // SKINCOLOR_BLUE
 	"Peach",     // SKINCOLOR_PEACH
 	"Tan",       // SKINCOLOR_TAN
-	"Pink",      // SKINCOLOR_PINK
+	"Bubblegum", // SKINCOLOR_PINK
 	"Lavender",  // SKINCOLOR_LAVENDER
 	"Purple",    // SKINCOLOR_PURPLE
 	"Orange",    // SKINCOLOR_ORANGE
@@ -156,13 +156,13 @@ const char *Color_Names[MAXSKINCOLORS] =
 	"Beige",     // SKINCOLOR_BEIGE
 	"Brown",     // SKINCOLOR_BROWN
 	"Red",       // SKINCOLOR_RED
-	"Dark_Red",  // SKINCOLOR_DARKRED
-	"Neon_Green",// SKINCOLOR_NEONGREEN
+	"Crimson",   // SKINCOLOR_DARKRED
+	"Mint",			 // SKINCOLOR_NEONGREEN
 	"Green",     // SKINCOLOR_GREEN
 	"Zim",       // SKINCOLOR_ZIM
 	"Olive",     // SKINCOLOR_OLIVE
 	"Yellow",    // SKINCOLOR_YELLOW
-	"Gold"       // SKINCOLOR_GOLD
+	"Gold",       // SKINCOLOR_GOLD
 };
 
 const UINT8 Color_Opposite[MAXSKINCOLORS*2] =
@@ -236,34 +236,42 @@ void R_InitTranslationTables(void)
 */
 static void R_GenerateTranslationColormap(UINT8 *dest_colormap, INT32 skinnum, UINT8 color)
 {
-	// Table of indices into the palette of the first entries of each translated ramp
-	const UINT8 skinbasecolors[] = {
-		0x00, // SKINCOLOR_WHITE
-		0x03, // SKINCOLOR_SILVER
-		0x08, // SKINCOLOR_GREY
-		0x18, // SKINCOLOR_BLACK
-		0xd0, // SKINCOLOR_CYAN
-		0xdc, // SKINCOLOR_TEAL
-		0xc8, // SKINCOLOR_STEELBLUE
-		0xe2, // SKINCOLOR_BLUE
-		0x40, // SKINCOLOR_PEACH
-		0x48, // SKINCOLOR_TAN
-		0x90, // SKINCOLOR_PINK
-		0xf8, // SKINCOLOR_LAVENDER
-		0xc0, // SKINCOLOR_PURPLE
-		0x52, // SKINCOLOR_ORANGE
-		0x5c, // SKINCOLOR_ROSEWOOD
-		0x20, // SKINCOLOR_BEIGE
-		0x30, // SKINCOLOR_BROWN
-		0x7d, // SKINCOLOR_RED
-		0x85, // SKINCOLOR_DARKRED
-		0xb8, // SKINCOLOR_NEONGREEN
-		0xa0, // SKINCOLOR_GREEN
-		0xb0, // SKINCOLOR_ZIM
-		0x69, // SKINCOLOR_OLIVE
-		0x67, // SKINCOLOR_YELLOW
-		0x70, // SKINCOLOR_GOLD
-	};
+    // Lach - 7 September 2019
+    const UINT8 skincolorramps[MAXSKINCOLORS][SKIN_RAMP_LENGTH] = {
+				{120, 120, 120, 120,   0,   2,   5,   8,   9,  11,  14,  17,  20,  22,  25,  28}, // SKINCOLOR_WHITE (Kart)
+    //  {  0,   0,   1,   1,   2,   2,   3,   3,   4,   4,   5,   5,   6,   6,   7,   7}, // SKINCOLOR_WHITE (Old)
+        {  3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,  16,  17,  18}, // SKINCOLOR_SILVER
+        {  8,   9,  10,  11,  12,  13,  14,  15,  16,  17,  18,  19,  20,  21,  22,  23}, // SKINCOLOR_GREY
+        { 24,  24,  25,  25,  26,  26,  27,  27,  28,  28,  29,  29,  30,  30,  31,  31}, // SKINCOLOR_BLACK
+        {208, 208, 209, 210, 211, 211, 212, 213, 214, 214, 215, 216, 217, 217, 218, 219}, // SKINCOLOR_CYAN
+				{120, 208, 208, 210, 212, 214, 220, 220, 220, 221, 221, 222, 222, 223, 223, 191}, // SKINCOLOR_TEAL (Kart Aqua)
+    //  {247, 247, 247, 247, 220, 220, 220, 221, 221, 221, 222, 222, 222, 223, 223, 223}, // SKINCOLOR_TEAL (Old)
+				{120, 120, 200, 200, 200, 201, 201, 201, 202, 202, 202, 203, 204, 205, 206, 207}, // SKINCOLOR_STEELBLUE (Kart Slate)
+  	//  {200, 200, 201, 201, 202, 202, 203, 203, 204, 204, 205, 205, 206, 206, 207, 207}, // SKINCOLOR_STEELBLUE (Old)
+				{208, 209, 211, 213, 215, 217, 229, 230, 232, 234, 236, 238, 240, 242, 244, 246}, // SKINCOLOR_BLUE (Kart Sapphire)
+    //	{226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241}, // SKINCOLOR_BLUE (Old)
+        { 64,  65,  66,  67,  68,  69,  70,  71,  72,  73,  74,  75,  76,  77,  78,  79}, // SKINCOLOR_PEACH
+        { 72,  73,  74,  75,  76,  77,  78,  79,  48,  49,  50,  51,  52,  53,  54,  55}, // SKINCOLOR_TAN
+				{120,  96,  64, 121,  67, 144, 123, 192, 193, 194, 195, 196, 197, 198, 199,  30}, // SKINCOLOR_PINK (Kart Bubblegum)
+    //  {144, 144, 145, 145, 146, 146, 147, 147, 148, 148, 149, 149, 150, 150, 151, 151}, // SKINCOLOR_PINK (Old)
+        {248, 248, 249, 249, 250, 250, 251, 251, 252, 252, 253, 253, 254, 254, 255, 255}, // SKINCOLOR_LAVENDER
+        {192, 192, 193, 193, 194, 194, 195, 195, 196, 196, 197, 197, 198, 198, 199, 199}, // SKINCOLOR_PURPLE
+        { 82,  83,  84,  85,  86,  87,  88,  89,  90,  91,  92,  93,  94,  95, 152, 153}, // SKINCOLOR_ORANGE
+        { 92,  92,  93,  94,  95,  95, 152, 153, 154, 154, 155, 156, 157, 157, 158, 159}, // SKINCOLOR_ROSEWOOD
+        { 32,  33,  34,  35,  36,  37,  38,  39,  40,  41,  42,  43,  44,  45,  46,  47}, // SKINCOLOR_BEIGE
+        { 48,  49,  50,  51,  52,  53,  54,  55,  56,  57,  58,  59,  60,  61,  62,  63},	// SKINCOLOR_BROWN
+        {125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140}, // SKINCOLOR_RED
+				{123, 125, 128, 131, 133, 135, 136, 138, 140, 140, 141, 141, 142, 142, 143,  31}, // SKINCOLOR_DARKRED (Kart Crimson)
+    //  {133, 133, 134, 134, 135, 135, 136, 136, 137, 137, 138, 138, 139, 139, 140, 140}, // SKINCOLOR_DARKRED (Old)
+				{120, 176, 176, 176, 177, 163, 164, 165, 167, 221, 221, 222, 223, 207, 207,  31}, // SKINCOLOR_NEONGREEN (Mint)
+		//	{160, 184, 184, 184, 185, 185, 186, 186, 186, 187, 187, 188, 188, 188, 189, 189}, // SKINCOLOR_NEONGREEN (Old)
+        {160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175}, // SKINCOLOR_GREEN
+        {176, 176, 177, 177, 178, 178, 179, 179, 180, 180, 181, 181, 182, 182, 183, 183}, // SKINCOLOR_ZIM
+        {105, 105, 105, 106, 106, 107, 107, 108, 108, 108, 109, 109, 110, 110, 111, 111}, // SKINCOLOR_OLIVE
+				{ 96,  97,  98, 100, 101, 102, 104, 113, 114, 115, 116, 117, 118, 119, 156, 159}, // SKINCOLOR_YELLOW (Kart)
+    //	{103, 103, 104, 104, 105, 105, 106, 106, 107, 107, 108, 108, 109, 109, 110, 110}, // SKINCOLOR_YELLOW (Old)
+        {112, 112, 113, 113, 114, 114, 115, 115, 116, 116, 117, 117, 118, 118, 119, 119}, // SKINCOLOR_GOLD
+    };
 	INT32 i;
 	INT32 starttranscolor;
 
@@ -294,90 +302,17 @@ static void R_GenerateTranslationColormap(UINT8 *dest_colormap, INT32 skinnum, U
 	for (i = (UINT8)(starttranscolor + 16); i < NUM_PALETTE_ENTRIES; i++)
 		dest_colormap[i] = (UINT8)i;
 
+    if (color < MAXSKINCOLORS)
+    {
+        for (i = 0; i < SKIN_RAMP_LENGTH; i++)
+            dest_colormap[starttranscolor + i] = (UINT8)(skincolorramps[color - 1][i]);
+        return;
+    }
+
+
 	// Build the translated ramp
 	switch (color)
-	{
-	case SKINCOLOR_SILVER:
-	case SKINCOLOR_GREY:
-	case SKINCOLOR_PEACH:
-	case SKINCOLOR_BEIGE:
-	case SKINCOLOR_BROWN:
-	case SKINCOLOR_RED:
-	case SKINCOLOR_GREEN:
-	case SKINCOLOR_BLUE:
-		// 16 color ramp
-		for (i = 0; i < SKIN_RAMP_LENGTH; i++)
-			dest_colormap[starttranscolor + i] = (UINT8)(skinbasecolors[color - 1] + i);
-		break;
-
-	case SKINCOLOR_ORANGE:
-		// 14 colors of orange + brown
-		for (i = 0; i < SKIN_RAMP_LENGTH-2; i++)
-			dest_colormap[starttranscolor + i] = (UINT8)(skinbasecolors[color - 1] + i);
-		for (i = 0; i < 2; i++)
-			dest_colormap[starttranscolor + (i+SKIN_RAMP_LENGTH-2)] = (UINT8)(152 + i);
-		break;
-
-	case SKINCOLOR_CYAN:
-		// 12 color ramp
-		for (i = 0; i < SKIN_RAMP_LENGTH; i++)
-			dest_colormap[starttranscolor + i] = (UINT8)(skinbasecolors[color - 1] + (12*i/SKIN_RAMP_LENGTH));
-		break;
-
-	case SKINCOLOR_WHITE:
-	case SKINCOLOR_BLACK:
-	case SKINCOLOR_STEELBLUE:
-	case SKINCOLOR_PINK:
-	case SKINCOLOR_LAVENDER:
-	case SKINCOLOR_PURPLE:
-	case SKINCOLOR_DARKRED:
-	case SKINCOLOR_ZIM:
-	case SKINCOLOR_YELLOW:
-	case SKINCOLOR_GOLD:
-		// 8 color ramp
-		for (i = 0; i < SKIN_RAMP_LENGTH; i++)
-			dest_colormap[starttranscolor + i] = (UINT8)(skinbasecolors[color - 1] + (i >> 1));
-		break;
-
-	case SKINCOLOR_TEAL:
-		// 5 color ramp
-		for (i = 0; i < SKIN_RAMP_LENGTH; i++)
-		{
-			if (5*i/16 == 0)
-				dest_colormap[starttranscolor + i] = 0xf7;
-			else
-				dest_colormap[starttranscolor + i] = (UINT8)(skinbasecolors[color - 1] + (5*i/SKIN_RAMP_LENGTH) - 1);
-		}
-		break;
-
-	case SKINCOLOR_OLIVE:
-		// 7 color ramp
-		for (i = 0; i < SKIN_RAMP_LENGTH; i++)
-			dest_colormap[starttranscolor + i] = (UINT8)(skinbasecolors[color - 1] + (7*i/SKIN_RAMP_LENGTH));
-		break;
-
-	case SKINCOLOR_TAN:
-		// 16 color ramp, from two color ranges
-		for (i = 0; i < SKIN_RAMP_LENGTH/2; i++) // Peach half
-			dest_colormap[starttranscolor + i] = (UINT8)(skinbasecolors[color - 1] + i);
-		for (i = 0; i < SKIN_RAMP_LENGTH/2; i++) // Brown half
-			dest_colormap[starttranscolor + (i+8)] = (UINT8)(48 + i);
-		break;
-
-	case SKINCOLOR_ROSEWOOD:
-		// 12 color ramp, from two color ranges!
-		for (i = 0; i < 6; i++) // Orange ...third?
-			dest_colormap[starttranscolor + i] = (UINT8)(skinbasecolors[color - 1] + (12*i/SKIN_RAMP_LENGTH));
-		for (i = 0; i < 10; i++) // Rosewood two-thirds-ish
-			dest_colormap[starttranscolor + (i+6)] = (UINT8)(152 + (12*i/SKIN_RAMP_LENGTH));
-		break;
-
-	case SKINCOLOR_NEONGREEN:
-		// Multi-color ramp
-		dest_colormap[starttranscolor] = 0xA0; // Brighter green
-		for (i = 0; i < SKIN_RAMP_LENGTH-1; i++) // Neon Green
-			dest_colormap[starttranscolor + (i+1)] = (UINT8)(skinbasecolors[color - 1] + (6*i/(SKIN_RAMP_LENGTH-1)));
-		break;
+    {
 
 	// Super colors, from lightest to darkest!
 	case SKINCOLOR_SUPER1:

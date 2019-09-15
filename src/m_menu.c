@@ -415,8 +415,7 @@ static consvar_t cv_dummymares = {"dummymares", "Overall", CV_HIDEN|CV_CALL, dum
 // ---------
 // Main Menu
 // ---------
-static menuitem_t MainMenu[] =
-{
+static menuitem_t MainMenu[] = {
 	{IT_CALL   |IT_STRING, NULL, "Secrets",     M_SecretsMenu,      76},
 	{IT_CALL   |IT_STRING, NULL, "Singleplayer",   M_SinglePlayerMenu, 84},
 	{IT_SUBMENU|IT_STRING, NULL, "multiplayer", &MP_MainDef,        92},
@@ -1672,7 +1671,7 @@ menu_t MP_PlayerSetupDef =
 };
 
 // Options
-menu_t OP_MainDef = DEFAULTMENUSTYLE("M_OPTTTL", OP_MainMenu, &MainDef, 60, 30);
+menu_t OP_MainDef = DEFAULTMENUSTYLE("M_OPTTTL", OP_MainMenu, &MainMenu, 60, 30);
 menu_t OP_ControlsDef = DEFAULTMENUSTYLE("M_CONTRO", OP_ControlsMenu, &OP_MainDef, 60, 30);
 menu_t OP_ControlListDef = DEFAULTMENUSTYLE("M_CONTRO", OP_ControlListMenu, &OP_ControlsDef, 60, 30);
 menu_t OP_MoveControlsDef = CONTROLMENUSTYLE(OP_MoveControlsMenu, &OP_ControlListDef);

@@ -27,6 +27,7 @@ typedef enum
 
 	GS_TITLESCREEN,     // title screen
 	GS_TIMEATTACK,      // time attack menu
+	GS_TITLEMENU,       // main menu
 	GS_CREDITS,         // credit sequence
 	GS_EVALUATION,      // Evaluation at the end of a game.
 	GS_GAMEEND,         // game end sequence
