@@ -5340,22 +5340,18 @@ static void HWR_DrawSprites(void)
 				HWR_DrawPrecipitationSprite(spr);
 			else
 #endif
-				if (spr->mobj && spr->mobj->skin && spr->mobj->sprite == SPR_PLAY)
-				{
-					boolean modelavailable = ((cv_models.value || (((skin_t*)spr->mobj->skin)->flags & SF_RENDERMODEL)) && md2_playermodels[(skin_t*)spr->mobj->skin-skins].scale > 0.0f);
-					if (modelavailable && HWR_DrawMD2(spr))
-						;
-					else
-						HWR_DrawSprite(spr);
-				}
+			{
+				boolean modelavailable = cv_models.value;
+				skin_t *skin = (skin_t *)spr->mobj->skin;
+				if ((skin != NULL) && (skin->flags & SF_RENDERMODEL))
+					modelavailable = true;
 				else
-				{
-					boolean modelavailable = ((cv_models.value || R_GetModelDefReplaceSpritesFlag(spr->mobj->sprite)) && md2_models[spr->mobj->sprite].scale > 0.0f);
-					if (modelavailable && HWR_DrawMD2(spr))
-						;
-					else
-						HWR_DrawSprite(spr);
-				}
+					modelavailable = R_GetModelDefReplaceSpritesFlag(spr->mobj->sprite);
+				if (modelavailable && HWR_DrawMD2(spr))
+					;
+				else
+					HWR_DrawSprite(spr);
+			}
 		}
 	}
 }
