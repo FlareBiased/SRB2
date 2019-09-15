@@ -35,23 +35,16 @@ void RSP_Init(void)
 }
 
 // make the viewport, after resolution change
-void RSP_Viewport(INT32 width, INT32 height, boolean sscreen)
+void RSP_Viewport(INT32 width, INT32 height)
 {
-	const float den = 1.7f;
-	float fov = 90.0f - (48.0f / den);
-	float aspecty = (BASEVIDHEIGHT * vid.dupy);
+	float fov = 90.0f;
 
 	// viewport width and height
 	rsp_target.width = width;
 	rsp_target.height = height;
 
 	// viewport aspect ratio and fov
-	if (sscreen)
-	{
-		fov /= den;
-		aspecty /= 2.0f;
-	}
-	rsp_target.aspectratio = ((float)(BASEVIDWIDTH * vid.dupx) / aspecty);
+	rsp_target.aspectratio = (float)rsp_target.width / (float)rsp_target.height;
 	rsp_target.fov = fov;
 	fov *= (M_PI / 180.f);
 
@@ -126,16 +119,15 @@ void RSP_SetDrawerFunctions(void)
 // on frame start
 void RSP_OnFrame(void)
 {
-	if (!cv_models.value)
-		return;
-
 	RSP_ModelView();
 	rsp_viewwindowx = viewwindowx;
 	rsp_viewwindowy = viewwindowy;
 	rsp_target.aiming = true;
+	rsp_portalrender = 0;
 }
 
 // PORTAL STUFF
+UINT8 rsp_portalrender;
 
 // Store the current viewpoint
 void RSP_StoreViewpoint(void)
@@ -245,7 +237,7 @@ void RSP_DebugRender(INT32 model)
 	rsp_viewpoint.viewsin = FINESINE(va>>ANGLETOFINESHIFT);
 
 	// set viewpoint
-	RSP_Viewport(vid.width, vid.height, false);
+	RSP_Viewport(vid.width, vid.height);
 	RSP_SetupFrame(vx, vy, vz, va);
 	RSP_ClearDepthBuffer();
 	rsp_viewwindowx = 0;
@@ -272,7 +264,7 @@ void RSP_DebugRender(INT32 model)
 			nextframe = FixedInt(frame+FRACUNIT) % numframes;
 			nextframenum = states[S_PLAY_RUN1+nextframe].frame;
 			pol = FIXED_TO_FLOAT(frame % FRACUNIT);
-			RSP_RenderInterpolatedModelSimple(SPR_PLAY, curframenum, nextframenum, pol, 0, 0, 0, angle, skincolour, &skins[skinnum], false, false);
+			RSP_RenderInterpolatedModelSimple(SPR_PLAY, curframenum, nextframenum, pol, (cv_modelinterpolation.value == 2), 0, 0, 0, angle, skincolour, &skins[skinnum], false, false);
 		}
 		else
 			RSP_RenderModelSimple(SPR_PLAY, curframenum, 0, 0, 0, angle, skincolour, &skins[skinnum], false, false);
@@ -287,16 +279,15 @@ void RSP_DebugRender(INT32 model)
 		const INT32 nummonitors = 10;
 		const float distance = 40.0f;
 		for (i = 0; i < nummonitors; i++)
-			RSP_RenderModelSimple(SPR_YLTV+i, 0, ((-nummonitors/2 + i) * distance) + (distance / 2.0f), 0, 0, 0.0f, 0, NULL, false, true);
+			RSP_RenderModelSimple(SPR_YLTV+i, 0, ((-nummonitors/2 + i) * distance) + (distance / 2.0f), 0, 0, 0, 0, NULL, false, true);
 	}
 	// sign post
 	else if (model == 3)
 	{
-		RSP_RenderModelSimple(SPR_SIGN, states[S_SIGN53].frame + Color_Opposite[skincolour*2+1], 0, 0, 0, angle, Color_Opposite[skincolour*2], NULL, false, false);
-		RSP_RenderModelSimple(SPR_PLAY, states[S_PLAY_SIGN].frame, 0, 0, 24.0f, angle, skincolour, &skins[skinnum], false, false);
-		angle -= 2.0f;
+		RSP_RenderModelSimple(SPR_SIGN, states[S_SIGN53].frame + Color_Opposite[skincolour*2+1], 0, 0, 0, -90.0f, Color_Opposite[skincolour*2], NULL, false, false);
+		RSP_RenderModelSimple(SPR_PLAY, states[S_PLAY_SIGN].frame, 0, 0, 24.0f, -90.0f, skincolour, &skins[skinnum], false, false);
 	}
 
 	// restore the viewport!!!!!!!!!
-	RSP_Viewport(viewwidth, viewheight, splitscreen);
+	RSP_Viewport(viewwidth, viewheight);
 }

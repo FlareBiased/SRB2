@@ -18,7 +18,9 @@
 #include "g_input.h"
 #include "r_local.h"
 #include "r_splats.h" // faB(21jan): testing
+#include "r_model.h"
 #include "r_sky.h"
+#include "hu_stuff.h"
 #include "st_stuff.h"
 #include "p_local.h"
 #include "keys.h"
@@ -28,6 +30,7 @@
 #include "d_main.h"
 #include "v_video.h"
 #include "p_spec.h" // skyboxmo
+#include "p_setup.h"
 #include "z_zone.h"
 #include "m_random.h" // quake camera shake
 
@@ -37,6 +40,7 @@
 
 #ifdef HWRENDER
 #include "hardware/hw_main.h"
+#include "hardware/hw_md2.h"
 #endif
 
 //profile stuff ---------------------------------------------------------
@@ -61,11 +65,6 @@ fixed_t centerxfrac, centeryfrac;
 fixed_t projection;
 fixed_t projectiony; // aspect ratio
 
-#ifdef SOFTPOLY
-fixed_t viewfocratio;
-boolean bigstretchy;
-#endif // SOFTPOLY
-
 // just for profiling purposes
 size_t framecount;
 
@@ -82,6 +81,10 @@ boolean viewsky, skyVisible;
 boolean skyVisible1, skyVisible2; // saved values of skyVisible for P1 and P2, for splitscreen
 sector_t *viewsector;
 player_t *viewplayer;
+
+#ifdef SOFTPOLY
+boolean modelinview = false;
+#endif
 
 // PORTALS!
 // You can thank and/or curse JTE for these.
@@ -614,15 +617,6 @@ void R_ExecuteSetViewSize(void)
 	centeryfrac = centery<<FRACBITS;
 
 	// aspect ratio
-#ifdef SOFTPOLY
-	bigstretchy = (cv_models.value);
-	if (bigstretchy)
-	{
-		projectiony = (((vid.height*centerx*BASEVIDWIDTH)/BASEVIDHEIGHT)/vid.width)<<FRACBITS;
-		viewfocratio = (projectiony / centerx);
-	}
-	else
-#endif // SOFTPOLY
 	projectiony = centerxfrac;
 	projection = centerxfrac;
 
@@ -683,8 +677,7 @@ void R_ExecuteSetViewSize(void)
 
 	am_recalc = true;
 #ifdef SOFTPOLY
-	if (cv_models.value)
-		RSP_Viewport(viewwidth, viewheight, splitscreen);
+	RSP_Viewport(viewwidth, viewheight);
 #endif
 }
 
@@ -902,8 +895,7 @@ void R_SetupFrame(player_t *player, boolean skybox)
 
 	R_SetupFreelook();
 #ifdef SOFTPOLY
-	if (cv_models.value)
-		RSP_ModelView();
+	RSP_ModelView();
 #endif
 }
 
@@ -1124,8 +1116,7 @@ void R_SkyboxFrame(player_t *player)
 
 	R_SetupFreelook();
 #ifdef SOFTPOLY
-	if (cv_models.value)
-		RSP_ModelView();
+	RSP_ModelView();
 #endif
 }
 
@@ -1252,9 +1243,6 @@ void R_RenderPlayerView(player_t *player)
 {
 	portal_pair *portal;
 	const boolean skybox = (skyboxmo[0] && cv_skybox.value);
-#ifdef SOFTPOLY
-	boolean portalrendered = false;
-#endif // SOFTPOLY
 
 	if (cv_homremoval.value && player == &players[displayplayer]) // if this is display player 1
 	{
@@ -1274,8 +1262,9 @@ void R_RenderPlayerView(player_t *player)
 	portal_base = portal_cap = NULL;
 
 #ifdef SOFTPOLY
+	modelinview = false;
 	RSP_OnFrame();
-#endif // SOFTPOLY
+#endif
 
 	if (skybox && skyVisible)
 	{
@@ -1333,32 +1322,30 @@ void R_RenderPlayerView(player_t *player)
 //profile stuff ---------------------------------------------------------
 
 	// PORTAL RENDERING
-	for(portal = portal_base; portal; portal = portal_base)
+#ifdef SOFTPOLY
+	if (modelinview && portal_base)
+		RSP_StoreViewpoint();
+#endif
+	for (portal = portal_base; portal; portal = portal_base)
 	{
 		// render the portal
 		CONS_Debug(DBG_RENDER, "Rendering portal from line %d to %d\n", portal->line1, portal->line2);
 		portalrender = portal->pass;
 
-#ifdef SOFTPOLY
-		if (cv_models.value)
-		{
-			RSP_StoreViewpoint();
-			portalrendered = true;
-		}
-#endif // SOFTPOLY
-
 		R_PortalFrame(&lines[portal->line1], &lines[portal->line2], portal);
+#ifdef SOFTPOLY
+		if (modelinview)
+		{
+			RSP_ModelView();
+			rsp_portalrender = portalrender;
+		}
+#endif
 
 		R_PortalClearClipSegs(portal->start, portal->end);
-
 		R_PortalRestoreClipValues(portal->start, portal->end, portal->ceilingclip, portal->floorclip, portal->frontscale);
 
 		validcount++;
 
-#ifdef SOFTPOLY
-		if (cv_models.value)
-			RSP_ModelView();
-#endif
 		R_RenderBSPNode((INT32)numnodes - 1);
 		R_ClipSprites();
 		//R_DrawPlanes();
@@ -1372,12 +1359,11 @@ void R_RenderPlayerView(player_t *player)
 		Z_Free(portal->frontscale);
 		Z_Free(portal);
 	}
-	// END PORTAL RENDERING
-
 #ifdef SOFTPOLY
-	if (portalrendered && cv_models.value)
+	if (rsp_portalrender)
 		RSP_RestoreViewpoint();
 #endif
+	// END PORTAL RENDERING
 
 	R_DrawPlanes();
 #ifdef FLOORSPLATS
@@ -1396,6 +1382,27 @@ void R_RenderPlayerView(player_t *player)
 		skyVisible2 = skyVisible;
 	else
 		skyVisible1 = skyVisible;
+}
+
+// Jimita
+#ifdef HWRENDER
+void R_InitHardwareMode(void)
+{
+	HWR_AddCommands();
+	if (gamestate == GS_LEVEL)
+	{
+		HWR_SetupLevel();
+		HWR_PrepLevelCache(numtextures);
+	}
+}
+#endif
+
+void R_ReloadHUDGraphics(void)
+{
+	CONS_Debug(DBG_RENDER, "R_ReloadHUDGraphics()...\n");
+	ST_LoadGraphics();
+	HU_LoadGraphics();
+	ST_ReloadSkinFaceGraphics();
 }
 
 // =========================================================================
@@ -1458,7 +1465,6 @@ void R_RegisterEngineStuff(void)
 	CV_RegisterVar(&cv_grgammared);
 	CV_RegisterVar(&cv_grfovchange);
 	CV_RegisterVar(&cv_grfog);
-	CV_RegisterVar(&cv_voodoocompatibility);
 	CV_RegisterVar(&cv_grfogcolor);
 	CV_RegisterVar(&cv_grsoftwarefog);
 

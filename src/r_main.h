@@ -27,14 +27,13 @@ extern INT32 centerx, centery;
 extern fixed_t centerxfrac, centeryfrac;
 extern fixed_t projection, projectiony;
 
-#ifdef SOFTPOLY
-extern fixed_t viewfocratio;
-extern boolean bigstretchy;
-#endif
-
 extern size_t validcount, linecount, loopcount, framecount;
 #ifdef ESLOPE
 extern float focallengthf;
+#endif
+
+#ifdef SOFTPOLY
+extern boolean modelinview;
 #endif
 
 //
@@ -92,6 +91,15 @@ extern consvar_t cv_tailspickup;
 
 // Called by startup code.
 void R_Init(void);
+void R_ReloadHUDGraphics(void);
+
+#ifdef HWRENDER
+void R_InitHardwareMode(void);
+extern boolean initmodels_hwr;
+#endif
+#ifdef SOFTPOLY
+extern boolean initmodels_rsp;
+#endif
 
 // just sets setsizeneeded true
 extern boolean setsizeneeded;

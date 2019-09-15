@@ -17,6 +17,7 @@
 #include "../doomtype.h"
 #include "../doomstat.h"
 #include "../g_game.h"
+#include "../i_video.h"
 #include "../r_data.h"
 #include "../r_defs.h"
 #include "../r_main.h"
@@ -26,11 +27,10 @@
 #include "../z_zone.h"
 #include "../w_wad.h"
 
-#define FixedLerp(start, end, r) ( FixedMul(start, (FRACUNIT - (r))) + FixedMul(end, r) )
-#define LERP(start, end, r) ( (start) * (1.0 - (r)) + (end) * (r) )
-#define VERTEX_SWAP(v1, v2) { rsp_vertex_t s = v2; v2 = v1; v1 = s; }
+//#define RSP_CLIPTRIANGLES
 
-#define SOFTWARE_AIMING (centery - (viewheight/2))
+#define FixedLerp(start, end, r) ( FixedMul(start, (FRACUNIT - (r))) + FixedMul(end, r) )
+#define FloatLerp(start, end, r) ( (start) * (1.0 - (r)) + (end) * (r) )
 
 typedef struct
 {
@@ -79,6 +79,7 @@ void RSP_MatrixTranspose(fpmatrix16_t *m);
 void RSP_MakeIdentityMatrix(fpmatrix16_t *m);
 void RSP_MakePerspectiveMatrix(fpmatrix16_t *m, float fov, float aspectratio, float np, float fp);
 void RSP_MakeViewMatrix(fpmatrix16_t *m, fpvector4_t *eye, fpvector4_t *target, fpvector4_t *up);
+fpvector4_t RSP_IntersectPlane(fpvector4_t pp, fpvector4_t pn, fpvector4_t start, fpvector4_t end, float *t);
 
 fpquaternion_t RSP_QuaternionMultiply(fpquaternion_t *q1, fpquaternion_t *q2);
 fpquaternion_t RSP_QuaternionConjugate(fpquaternion_t *q);
@@ -86,7 +87,7 @@ fpvector4_t RSP_QuaternionMultiplyVector(fpquaternion_t *q, fpvector4_t *v);
 void RSP_QuaternionNormalize(fpquaternion_t *q);
 void RSP_QuaternionRotateVector(fpvector4_t *v, fpquaternion_t *q);
 
-fpvector4_t RSP_IntersectPlane(fpvector4_t pp, fpvector4_t pn, fpvector4_t start, fpvector4_t end, float *t);
+#define RSP_SwapVertex(v1, v2) { rsp_vertex_t s = v2; v2 = v1; v1 = s; }
 
 // =======================
 //      Render target
@@ -158,6 +159,7 @@ extern fixed_t rsp_zpix;
 extern UINT8 *rsp_tpix;
 
 extern INT32 rsp_viewwindowx, rsp_viewwindowy;
+#define SOFTWARE_AIMING (centery - (viewheight/2))
 
 void RSP_DrawPixel(void);
 void RSP_DrawTranslucentPixel(void);
@@ -187,34 +189,44 @@ extern viewpoint_t rsp_viewpoint;
 extern fpmatrix16_t *rsp_projectionmatrix;
 
 void RSP_Init(void);
-void RSP_Viewport(INT32 width, INT32 height, boolean sscreen);
+void RSP_Viewport(INT32 width, INT32 height);
 void RSP_OnFrame(void);
 void RSP_ModelView(void);
 void RSP_SetDrawerFunctions(void);
 void RSP_DebugRender(INT32 model);
 void RSP_ClearDepthBuffer(void);
 
+// PORTAL STUFF
 void RSP_StoreViewpoint(void);
 void RSP_RestoreViewpoint(void);
 void RSP_StoreSpriteViewpoint(vissprite_t *spr);
 void RSP_RestoreSpriteViewpoint(vissprite_t *spr);
 
+extern UINT8 rsp_portalrender;
+
 #include "../r_model.h"
 
 typedef struct
 {
-	char				filename[32];
-	float				scale;
-	float				offset;
-	model_t				*model;
-	void				*texture;
-	void				*blendtexture;
-	boolean				notfound;
-	INT32				skin;
-	boolean				error;
+	char                filename[32];
+	float               scale;
+	float               xoffset;
+	float               yoffset;
+	float               angleoffset;
+	model_t             *model;
+	void                *texture;
+	void                *blendtexture;
+	modelflags_t        modelflags;
+	boolean             internal;
+	UINT32              model_lumpnum;
+	UINT32              texture_lumpnum;
+	UINT32              blendtexture_lumpnum;
+	boolean             notfound;
+	INT32               skin;
 
-	rsp_texture_t		rsp_tex;
-	rsp_texture_t		rsp_transtex[MAXTRANSLATIONS];
+	// RSP textures
+	rsp_texture_t       rsp_tex;
+	rsp_texture_t       rsp_transtex[MAXTRANSLATIONS];
 } rsp_md2_t;
 
 extern rsp_md2_t rsp_md2_models[NUMSPRITES];
@@ -222,16 +234,21 @@ extern rsp_md2_t rsp_md2_playermodels[MAXSKINS];
 
 void RSP_InitModels(void);
 model_t *RSP_LoadModel(const char *filename);
+model_t *RSP_LoadInternalModel(UINT32 lumpnum);
 rsp_md2_t *RSP_ModelAvailable(spritenum_t spritenum, skin_t *skin);
+
 boolean RSP_RenderModel(vissprite_t *spr);
-boolean RSP_RenderModelSimple(spritenum_t spritenum, UINT32 framenum, float x, float y, float z, float model_angle, skincolors_t skincolor, skin_t *skin, boolean flip, boolean billboard);
-boolean RSP_RenderInterpolatedModelSimple(spritenum_t spritenum, UINT32 framenum, UINT32 nextframenum, float pol, float x, float y, float z, float model_angle, skincolors_t skincolor, skin_t *skin, boolean flip, boolean billboard);
+boolean RSP_RenderModelSimple(spritenum_t spritenum, INT32 frameIndex, float x, float y, float z, float model_angle, skincolors_t skincolor, skin_t *skin, boolean flip, boolean billboard);
+boolean RSP_RenderInterpolatedModelSimple(spritenum_t spritenum, INT32 frameIndex, INT32 nextFrameIndex, float pol, boolean alwaysinterpolate, float x, float y, float z, float model_angle, skincolors_t skincolor, skin_t *skin, boolean flip, boolean billboard);
 
 void RSP_AddPlayerModel(INT32 skin);
 void RSP_AddSpriteModel(size_t spritenum);
 
-void RSP_CreateModelTexture(rsp_md2_t *model, INT32 skincolor);
-void RSP_LoadModelTexture(rsp_md2_t *model);
+void RSP_AddInternalPlayerModel(UINT32 lumpnum, size_t skinnum, float scale, float xoffset, float yoffset);
+void RSP_AddInternalSpriteModel(UINT32 lumpnum);
+
+void RSP_CreateModelTexture(rsp_md2_t *model, INT32 skinnum, INT32 skincolor);
+void RSP_LoadModelTexture(rsp_md2_t *model, INT32 skinnum);
 void RSP_LoadModelBlendTexture(rsp_md2_t *model);
 void RSP_FreeModelTexture(rsp_md2_t *model);
 void RSP_FreeModelBlendTexture(rsp_md2_t *model);

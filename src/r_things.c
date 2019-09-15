@@ -21,6 +21,7 @@
 #include "m_misc.h"
 #include "i_video.h" // rendermode
 #include "r_things.h"
+#include "r_model.h"
 #include "r_plane.h"
 #include "p_tick.h"
 #include "p_local.h"
@@ -28,12 +29,14 @@
 #include "dehacked.h" // get_number (for thok)
 #include "d_netfil.h" // blargh. for nameonly().
 #include "m_cheat.h" // objectplace
+
 #ifdef HWRENDER
 #include "hardware/hw_md2.h"
 #endif
+
 #ifdef SOFTPOLY
 #include "polyrenderer/r_softpoly.h"
-#endif // SOFTPOLY
+#endif
 
 #ifdef PC_DOS
 #include <stdio.h> // for snprintf
@@ -114,14 +117,23 @@ static void R_InstallSpriteLump(UINT16 wad,            // graphics patch
 		UINT8 rot = (rotation != 0) ? (rotation-1) : 0;
 		patch_t *patch = (patch_t *)W_CacheLumpNumPwad(wad, lump, PU_STATIC);
 		rsp_spritetexture_t *tex = &sprtemp[frame].rsp_texture[rot];
+		INT32 blockwidth, blockheight;
 
-		tex->width = patch->width;
-		tex->height = patch->height;
-		tex->data = Z_Malloc(tex->width * tex->height, PU_STATIC, NULL);
-		memset(tex->data, TRANSPARENTPIXEL, tex->width * tex->height);
+		// size up to nearest power of 2
+		blockwidth = 1;
+		blockheight = 1;
+		while (blockwidth < SHORT(patch->width))
+			blockwidth <<= 1;
+		while (blockheight < SHORT(patch->height))
+			blockheight <<= 1;
+
+		tex->width = blockwidth;
+		tex->height = blockheight;
+		tex->data = Z_Malloc(blockwidth * blockheight, PU_STATIC, NULL);
+		memset(tex->data, TRANSPARENTPIXEL, blockwidth * blockheight);
 
 		if (R_CheckIfPatch(lumppat))
-			RSP_GenerateTexture(patch, tex->data, 0, 0, tex->width, tex->height, NULL, NULL);
+			RSP_GenerateTexture(patch, tex->data, 0, 0, blockwidth, blockheight, NULL, NULL);
 
 		Z_Free(patch);
 	}
@@ -568,6 +580,8 @@ void R_InitSprites(void)
 	for (i = 0; i < numwadfiles; i++)
 		R_AddSkins((UINT16)i);
 
+	R_CheckLoadModels();
+
 	//
 	// check if all sprites have frames
 	//
@@ -787,6 +801,9 @@ static void R_DrawVisSprite(vissprite_t *vis)
 	INT64 overflow_test;
 
 	if (!patch)
+		return;
+
+	if (R_GetModelDefReplaceSpritesFlag(vis->mobj->sprite))
 		return;
 
 	// Check for overflow
@@ -1083,10 +1100,17 @@ static void R_SplitSprite(vissprite_t *sprite, mobj_t *thing)
 //
 static void R_ProjectSprite(mobj_t *thing)
 {
+	fixed_t thing_x, thing_y;
 	fixed_t tr_x, tr_y;
 	fixed_t gxt, gyt;
 	fixed_t tx, tz;
 	fixed_t xscale, yscale; //added : 02-02-98 : aaargll..if I were a math-guy!!!
+#ifdef SOFTPOLY
+	boolean model;
+	boolean dontcullmodel;
+	skin_t *skin;
+	rsp_md2_t *md2;
+#endif
 
 	INT32 x1, x2;
 
@@ -1110,9 +1134,32 @@ static void R_ProjectSprite(mobj_t *thing)
 	INT32 light = 0;
 	fixed_t this_scale = thing->scale;
 
+	thing_x = thing->x;
+	thing_y = thing->y;
+
+#ifdef SOFTPOLY
+	skin = (skin_t *)thing->skin;
+	md2 = RSP_ModelAvailable(thing->sprite, skin);
+
+	model = ((cv_models.value || R_GetModelDefReplaceSpritesFlag(thing->sprite)) && md2);
+	dontcullmodel = R_GetModelDefDoNotCullFlag(thing->sprite);
+
+	// skin model render flag
+	if ((skin != NULL) && (skin->flags & SF_RENDERMODEL))
+		model = true;
+
+	if (md2)
+	{
+		float ox = md2->xoffset;
+		float oy = md2->yoffset;
+		thing_x += FLOAT_TO_FIXED(ox);
+		thing_y += FLOAT_TO_FIXED(oy);
+	}
+#endif
+
 	// transform the origin point
-	tr_x = thing->x - viewx;
-	tr_y = thing->y - viewy;
+	tr_x = thing_x - viewx;
+	tr_y = thing_y - viewy;
 
 	gxt = FixedMul(tr_x, viewcos);
 	gyt = -FixedMul(tr_y, viewsin);
@@ -1121,7 +1168,17 @@ static void R_ProjectSprite(mobj_t *thing)
 
 	// thing is behind view plane?
 	if (tz < FixedMul(MINZ, this_scale))
-		return;
+	{
+#ifdef SOFTPOLY
+		if (model) //Yellow: Only MD2's dont disappear
+		{
+			if (!dontcullmodel)
+				return;
+		}
+		else
+#endif
+			return;
+	}
 
 	gxt = -FixedMul(tr_x, viewsin);
 	gyt = FixedMul(tr_y, viewcos);
@@ -1202,18 +1259,28 @@ static void R_ProjectSprite(mobj_t *thing)
 		tx -= FixedMul(spritecachedinfo[lump].width-spritecachedinfo[lump].offset, this_scale);
 	else
 		tx -= FixedMul(spritecachedinfo[lump].offset, this_scale);
-	x1 = (centerxfrac + FixedMul (tx,xscale)) >>FRACBITS;
+	x1 = (centerxfrac + FixedMul (tx,xscale))>>FRACBITS;
 
 	// off the right side?
 	if (x1 > viewwidth)
-		return;
+	{
+#ifdef SOFTPOLY
+		if (!model)
+#endif
+			return;
+	}
 
 	tx += FixedMul(spritecachedinfo[lump].width, this_scale);
 	x2 = ((centerxfrac + FixedMul (tx,xscale)) >>FRACBITS) - 1;
 
 	// off the left side
 	if (x2 < 0)
-		return;
+	{
+#ifdef SOFTPOLY
+		if (!model)
+#endif
+			return;
+	}
 
 	// PORTAL SPRITE CLIPPING
 	if (portalrender)
@@ -1310,7 +1377,10 @@ static void R_ProjectSprite(mobj_t *thing)
 #ifdef SOFTPOLY
 	vis->spritenum = thing->sprite;
 	vis->skin = thing->skin;
-#endif // SOFTPOLY
+	vis->model = model;
+	if (model)
+		modelinview = true;
+#endif
 
 	vis->x1 = x1 < 0 ? 0 : x1;
 	vis->x2 = x2 >= viewwidth ? viewwidth-1 : x2;
@@ -1393,12 +1463,12 @@ static void R_ProjectSprite(mobj_t *thing)
 
 	vis->isScaled = false;
 
+	if (thing->subsector->sector->numlights)
+		R_SplitSprite(vis, thing);
+
 #ifdef SOFTPOLY
 	RSP_StoreSpriteViewpoint(vis);
 #endif // SOFTPOLY
-
-	if (thing->subsector->sector->numlights)
-		R_SplitSprite(vis, thing);
 
 	// Debug
 	++objectsdrawn;
@@ -2000,11 +2070,18 @@ static void R_CreateDrawNodes(void)
 			}
 			else if (r2->sprite)
 			{
+#ifdef SOFTPOLY
+				if (r2->sprite->model || rover->model)
+					goto skip;
+#endif
 				if (r2->sprite->x1 > rover->x2 || r2->sprite->x2 < rover->x1)
 					continue;
 				if (r2->sprite->szt > rover->sz || r2->sprite->sz < rover->szt)
 					continue;
 
+#ifdef SOFTPOLY
+				skip:
+#endif
 				if (r2->sprite->scale > rover->scale
 				 || (r2->sprite->scale == rover->scale && r2->sprite->dispoffset > rover->dispoffset))
 				{
@@ -2094,7 +2171,7 @@ static void R_DrawSprite(vissprite_t *spr)
 #ifdef SOFTPOLY
 	rsp_mfloorclip = mfloorclip;
 	rsp_mceilingclip = mceilingclip;
-	if (!cv_models.value)
+	if (!spr->model)
 		R_DrawVisSprite(spr);
 	else if (!RSP_RenderModel(spr))
 #endif // SOFTPOLY
@@ -2137,7 +2214,7 @@ void R_ClipSprites(void)
 #ifdef SOFTPOLY
 		// Arkus: Yes, clip against the ENTIRE viewport.
 		// You don't know how big the model is!
-		if (cv_models.value && RSP_ModelAvailable(spr->spritenum, (skin_t *)spr->skin))
+		if (spr->model)
 		{
 			model = true;
 			ox1 = spr->x1, ox2 = spr->x2;
@@ -2626,6 +2703,10 @@ void R_AddSkins(UINT16 wadnum)
 	size_t size;
 	skin_t *skin;
 	boolean hudname, realname, superface;
+	boolean playermodel = false;
+	float playermodelscale = 1.0f;
+	float playermodelxoffset = 0.0;
+	float playermodelyoffset = 0.0;
 
 	//
 	// search for all skin markers in pwad
@@ -2758,6 +2839,18 @@ void R_AddSkins(UINT16 wadnum)
 				strupr(value);
 				strncpy(skin->superface, value, sizeof skin->superface);
 			}
+			else if (!stricmp(stoken, "model"))
+			{
+				strupr(value);
+				strncpy(skin->model, value, sizeof skin->model);
+				playermodel = true;
+			}
+			else if (!stricmp(stoken, "modelscale"))
+				playermodelscale = atof(value);
+			else if (!stricmp(stoken, "modelxoffset"))
+				playermodelxoffset = atof(value);
+			else if (!stricmp(stoken, "modelyoffset"))
+				playermodelyoffset = atof(value);
 
 #define FULLPROCESS(field) else if (!stricmp(stoken, #field)) skin->field = get_number(value);
 			// character type identification
@@ -2832,6 +2925,7 @@ next_token:
 				lastlump++;
 			// allocate (or replace) sprite frames, and set spritedef
 			R_AddSingleSpriteDef(csprname, &skin->spritedef, wadnum, lump, lastlump);
+			strncpy(skin->sprite, csprname, 4);
 		}
 		else
 		{
@@ -2886,6 +2980,16 @@ next_token:
 		}
 
 		R_FlushTranslationColormapCache();
+
+		if (playermodel)
+		{
+#ifdef SOFTPOLY
+			RSP_AddInternalPlayerModel(W_GetNumForName(skin->model), numskins, playermodelscale, playermodelxoffset, playermodelyoffset);
+#endif
+#ifdef HWRENDER
+			HWR_AddInternalPlayerMD2(W_GetNumForName(skin->model), numskins, playermodelscale, playermodelxoffset, playermodelyoffset);
+#endif
+		}
 
 		CONS_Printf(M_GetText("Added skin '%s'\n"), skin->name);
 #ifdef SKINVALUES

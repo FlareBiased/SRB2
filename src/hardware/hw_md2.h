@@ -24,36 +24,39 @@
 #include "hw_glob.h"
 #include "../r_model.h"
 
-typedef model_header_t md2_header_t;
-typedef model_alias_triangleVertex_t md2_alias_triangleVertex_t;
-typedef model_triangleVertex_t md2_triangleVertex_t;
-typedef model_triangle_t md2_triangle_t;
-typedef model_textureCoordinate_t md2_textureCoordinate_t;
-typedef model_alias_frame_t md2_alias_frame_t;
-typedef model_frame_t md2_frame_t;
-typedef model_skin_t md2_skin_t;
-typedef model_glCommandVertex_t md2_glCommandVertex_t;
-typedef model_t md2_model_t;
+#if defined(_MSC_VER)
+#pragma pack()
+#endif
 
 typedef struct
 {
-	char        filename[32];
-	float       scale;
-	float       offset;
-	md2_model_t *model;
-	void        *grpatch;
-	void        *blendgrpatch;
-	boolean     notfound;
-	INT32       skin;
-	boolean     error;
+	char         filename[32];
+	float        scale;
+	float        xoffset;
+	float        yoffset;
+	float        angleoffset;
+	model_t      *model;
+	void         *grpatch;
+	void         *blendgrpatch;
+	modelflags_t modelflags;
+	boolean      internal;
+	UINT32       model_lumpnum;
+	UINT32       texture_lumpnum;
+	UINT32       blendtexture_lumpnum;
+	boolean      notfound;
+	INT32        skin;
 } md2_t;
 
 extern md2_t md2_models[NUMSPRITES];
 extern md2_t md2_playermodels[MAXSKINS];
 
 void HWR_InitMD2(void);
-void HWR_DrawMD2(gr_vissprite_t *spr);
+boolean HWR_DrawMD2(gr_vissprite_t *spr);
+
 void HWR_AddPlayerMD2(INT32 skin);
 void HWR_AddSpriteMD2(size_t spritenum);
+
+void HWR_AddInternalPlayerMD2(UINT32 lumpnum, size_t skinnum, float scale, float xoffset, float yoffset);
+void HWR_AddInternalSpriteMD2(UINT32 lumpnum);
 
 #endif // _HW_MD2_H_
